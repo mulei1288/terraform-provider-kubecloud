@@ -7,7 +7,7 @@ import (
 	"context"
 	"flag"
 	"log"
-	"terraform-provider-bingocloud/internal/provider"
+	"github.com/mulei1288/terraform-provider-bingocloud/internal/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 )

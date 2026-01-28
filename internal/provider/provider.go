@@ -15,24 +15,26 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/mulei1288/terraform-provider-bingocloud/internal/conns"
+	"github.com/mulei1288/terraform-provider-bingocloud/internal/service/ec2"
 )
 
-// Ensure ScaffoldingProvider satisfies various provider interfaces.
-var _ provider.Provider = &ScaffoldingProvider{}
-var _ provider.ProviderWithFunctions = &ScaffoldingProvider{}
-var _ provider.ProviderWithEphemeralResources = &ScaffoldingProvider{}
-var _ provider.ProviderWithActions = &ScaffoldingProvider{}
+// Ensure BingoCloudProvider satisfies various provider interfaces.
+var _ provider.Provider = &BingoCloudProvider{}
+var _ provider.ProviderWithFunctions = &BingoCloudProvider{}
+var _ provider.ProviderWithEphemeralResources = &BingoCloudProvider{}
+var _ provider.ProviderWithActions = &BingoCloudProvider{}
 
-// ScaffoldingProvider defines the provider implementation.
-type ScaffoldingProvider struct {
+// BingoCloudProvider defines the provider implementation.
+type BingoCloudProvider struct {
 	// version is set to the provider version on release, "dev" when the
 	// provider is built and ran locally, and "test" when running acceptance
 	// testing.
 	version string
 }
 
-// ScaffoldingProviderModel describes the provider data model.
-type ScaffoldingProviderModel struct {
+// BingoCloudProviderModel describes the provider data model.
+type BingoCloudProviderModel struct {
 	Endpoint        types.String `tfsdk:"endpoint"`
 	AccessKey       types.String `tfsdk:"access_key"`
 	SecretKey       types.String `tfsdk:"secret_key"`
@@ -40,12 +42,12 @@ type ScaffoldingProviderModel struct {
 	InsecureSkipTLS types.Bool   `tfsdk:"insecure_skip_tls"`
 }
 
-func (p *ScaffoldingProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+func (p *BingoCloudProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
 	resp.TypeName = "bingocloud"
 	resp.Version = p.version
 }
 
-func (p *ScaffoldingProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
+func (p *BingoCloudProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "BingoCloud 私有云 Provider",
 		Attributes: map[string]schema.Attribute{
@@ -75,8 +77,8 @@ func (p *ScaffoldingProvider) Schema(ctx context.Context, req provider.SchemaReq
 	}
 }
 
-func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	var data ScaffoldingProviderModel
+func (p *BingoCloudProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+	var data BingoCloudProviderModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
@@ -132,7 +134,7 @@ func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.Config
 	}
 
 	// 创建 BingoCloud 客户端
-	client, err := NewBingoCloudClient(endpoint, accessKey, secretKey, region, insecureSkipTLS)
+	client, err := conns.NewBingoCloudClient(endpoint, accessKey, secretKey, region, insecureSkipTLS)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"无法创建 BingoCloud 客户端",
@@ -146,31 +148,33 @@ func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.Config
 	resp.ResourceData = client
 }
 
-func (p *ScaffoldingProvider) Resources(ctx context.Context) []func() resource.Resource {
-	return []func() resource.Resource{
-		NewInstanceResource,
-	}
+func (p *BingoCloudProvider) Resources(ctx context.Context) []func() resource.Resource {
+	// 从 Service Package 自动收集资源
+	ec2Service := &ec2.ServicePackage{}
+	resources := ec2Service.FrameworkResources(ctx)
+
+	return resources
 }
 
-func (p *ScaffoldingProvider) EphemeralResources(ctx context.Context) []func() ephemeral.EphemeralResource {
+func (p *BingoCloudProvider) EphemeralResources(ctx context.Context) []func() ephemeral.EphemeralResource {
 	return []func() ephemeral.EphemeralResource{}
 }
 
-func (p *ScaffoldingProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
+func (p *BingoCloudProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{}
 }
 
-func (p *ScaffoldingProvider) Functions(ctx context.Context) []func() function.Function {
+func (p *BingoCloudProvider) Functions(ctx context.Context) []func() function.Function {
 	return []func() function.Function{}
 }
 
-func (p *ScaffoldingProvider) Actions(ctx context.Context) []func() action.Action {
+func (p *BingoCloudProvider) Actions(ctx context.Context) []func() action.Action {
 	return []func() action.Action{}
 }
 
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
-		return &ScaffoldingProvider{
+		return &BingoCloudProvider{
 			version: version,
 		}
 	}

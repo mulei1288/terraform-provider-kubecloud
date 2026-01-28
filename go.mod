@@ -1,4 +1,4 @@
-module terraform-provider-bingocloud
+module github.com/mulei1288/terraform-provider-bingocloud
 
 go 1.25.5
 
